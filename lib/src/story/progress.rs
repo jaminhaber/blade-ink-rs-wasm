@@ -1,3 +1,5 @@
+use std::{self, rc::Rc};
+
 use crate::{
     choice::Choice,
     choice_point::ChoicePoint,
@@ -11,7 +13,6 @@ use crate::{
     value::Value,
     void::Void,
 };
-use std::{self, rc::Rc, time::Instant};
 
 /// # Story Progress
 /// Methods to move the story forwards.
@@ -40,16 +41,6 @@ impl Story {
         }
 
         Ok(sb)
-    }
-
-    /// Continues running the story code for the specified number of
-    /// milliseconds.
-    pub fn continue_async(&mut self, millisecs_limit_async: f32) -> Result<(), StoryError> {
-        if !self.has_validated_externals {
-            self.validate_external_bindings()?;
-        }
-
-        self.continue_internal(millisecs_limit_async)
     }
 
     pub(crate) fn if_async_we_cant(&self, activity_str: &str) -> Result<(), StoryError> {
@@ -94,7 +85,7 @@ impl Story {
         }
 
         // Start timing
-        let duration_stopwatch = Instant::now();
+        // let duration_stopwatch = Instant::now();
 
         let mut output_stream_ends_in_newline = false;
         self.saw_lookahead_unsafe_function_after_new_line = false;
@@ -109,13 +100,6 @@ impl Story {
             }
 
             if output_stream_ends_in_newline {
-                break;
-            }
-
-            // Run out of async time?
-            if self.async_continue_active
-                && duration_stopwatch.elapsed().as_millis() as f32 > millisecs_limit_async
-            {
                 break;
             }
 
@@ -274,10 +258,10 @@ impl Story {
         // Run out of content and we have a default invisible choice that we can follow?
         if !self.can_continue()
             && !self
-                .get_state()
-                .get_callstack()
-                .borrow()
-                .element_is_evaluate_from_game()
+            .get_state()
+            .get_callstack()
+            .borrow()
+            .element_is_evaluate_from_game()
         {
             self.try_follow_default_invisible_choice()?;
         }
